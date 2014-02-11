@@ -25,6 +25,9 @@ class Player
     directions = location_of_enemies(warrior)
     number = immediate_enemies(warrior)
 
+    if bomb_squad(warrior)
+      return
+    end
 
     if number > 1
       @units_bound << directions.first
@@ -72,7 +75,7 @@ class Player
   end
 
   def rescue_ticking_first(warrior, direction)
-    if warrior.feel(direction).wall? or warrior.feel(direction).stairs? #or warrior.feel(direction).enemy?
+    if warrior.feel(direction).wall? or warrior.feel(direction).stairs?
       rescue_ticking_first(warrior, counter_clockwise(direction))
     elsif warrior.feel(direction).empty?
       warrior.walk! direction
@@ -132,6 +135,22 @@ class Player
       end
     end
     false
+  end
+
+  def bomb_squad(warrior)
+    enemies = 0
+    warrior.look.each do |unit|
+      if unit.enemy?
+        enemies += 1
+      end
+    end
+    #puts "Enemies: #{enemies}"
+    if warrior.feel.empty?
+      warrior.walk!
+    elsif enemies > 1 and warrior.health > 4
+      warrior.detonate!
+      true
+    end
   end
 
   def number_of_captives(warrior)
