@@ -10,7 +10,7 @@ class Player
       @sensed = true
     end
 
-    if warrior.health < 4
+    if warrior.health < 7
       if should_attack
         warrior.walk! walk_to_free_space(warrior)
         return
@@ -21,7 +21,6 @@ class Player
     end
 
 
-
     number, directions = number_of_enemies(warrior)
 
 
@@ -29,17 +28,9 @@ class Player
       warrior.bind! directions.first
       return
     elsif number == 0 and caps > 0
-      warrior.walk! warrior.direction_of @locations.last
+      #warrior.walk! warrior.direction_of @locations.last
+      avoid_walls_and_stairs(warrior, warrior.direction_of(@locations.last))
       return
-    end
-
-    unless @rescued == @captives
-      @should_free, @here = captives_around(warrior)
-      if @should_free
-        warrior.rescue! @here
-        @rescued += 1
-        return
-      end
     end
 
 
@@ -64,6 +55,27 @@ class Player
       warrior.walk! @previous_direction
     else
       warrior.walk!(warrior.direction_of(warrior.listen.first))
+    end
+  end
+
+  def avoid_walls_and_stairs(warrior, direction)
+    if warrior.feel(direction).wall? or warrior.feel(direction).stairs?
+      avoid_walls_and_stairs(warrior, counter_clockwise(direction))
+    elsif warrior.feel(direction).empty?
+      warrior.walk! direction
+    else
+      rescue_c(warrior)
+    end
+  end
+
+  def rescue_c(warrior)
+    unless @rescued == @captives
+      @should_free, @here = captives_around(warrior)
+      if @should_free
+        warrior.rescue! @here
+        @rescued += 1
+        return
+      end
     end
   end
 
@@ -120,6 +132,21 @@ class Player
         return :left
       when :backward
         return :forward
+      else
+        return :forward
+    end
+  end
+
+  def counter_clockwise(where)
+    case where
+      when :forward
+        return :left
+      when :left
+        return :backward
+      when :right
+        return :forward
+      when :backward
+        return :right
       else
         return :forward
     end
