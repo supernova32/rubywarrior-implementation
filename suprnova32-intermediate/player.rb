@@ -4,7 +4,7 @@ class Player
   def play_turn(warrior)
     @rescued = 0
     should_attack, where = enemies_around(warrior)
-    caps, @locations = number_of_captives(warrior)
+    caps, @locations, @ticking = number_of_captives(warrior)
     unless @sensed
       @captives = caps
       @sensed = true
@@ -27,9 +27,8 @@ class Player
     if number > 2
       warrior.bind! directions.first
       return
-    elsif number == 0 and caps > 0
-      #warrior.walk! warrior.direction_of @locations.last
-      avoid_walls_and_stairs(warrior, warrior.direction_of(@locations.last))
+    elsif (number == 0 and caps > 0) or @ticking > 0
+      rescue_ticking_first(warrior, warrior.direction_of(@locations.first))
       return
     end
 
@@ -58,9 +57,9 @@ class Player
     end
   end
 
-  def avoid_walls_and_stairs(warrior, direction)
-    if warrior.feel(direction).wall? or warrior.feel(direction).stairs?
-      avoid_walls_and_stairs(warrior, counter_clockwise(direction))
+  def rescue_ticking_first(warrior, direction)
+    if warrior.feel(direction).wall? or warrior.feel(direction).stairs? or warrior.feel(direction).enemy?
+      rescue_ticking_first(warrior, counter_clockwise(direction))
     elsif warrior.feel(direction).empty?
       warrior.walk! direction
     else
@@ -113,13 +112,17 @@ class Player
     number = 0
     units = warrior.listen
     captives = []
+    ticking = 0
     units.each do |unit|
       if unit.captive?
         number += 1
         captives << unit
       end
+      if unit.ticking?
+        ticking += 1
+      end
     end
-    return number, captives
+    return number, captives, ticking
   end
 
   def opposite_direction(where)
