@@ -225,10 +225,6 @@ class Player
           thick_sludges += 1
         end
       end
-      #if warrior.feel(direction).empty?
-      #  p 'Walking to place a bomb!'
-      #  warrior.walk! direction
-      #  return true
       if enemies > 1
         if thick_sludges > 0
           if warrior.health > 4
